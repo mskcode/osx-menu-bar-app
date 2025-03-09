@@ -51,4 +51,14 @@ clean:
 .PHONY: help
 help:
 	@echo "Print help"
+	@echo ""
+	@echo "TARGETS"
+	@echo ""
+	@echo "  <default>      - Build executable"
+	@echo "  help           - Prints this help"
+	@echo "  clean          - Cleans project"
+	@echo "  verify         - Runs verifications"
 
+.PHONY: verify
+verify:
+	./scripts/verify-format-cpp.sh

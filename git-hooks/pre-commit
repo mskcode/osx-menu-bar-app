@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+echo "Running Git pre-commit hooks..."
+./scripts/verify-format-cpp.sh staged
