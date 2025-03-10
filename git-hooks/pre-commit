@@ -2,3 +2,4 @@
 
 echo "Running Git pre-commit hooks..."
 ./scripts/verify-format-cpp.sh staged
+./scripts/verify-style-cpp.sh

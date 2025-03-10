@@ -59,3 +59,4 @@ help:
 .PHONY: verify
 verify:
 	@./scripts/verify-format-cpp.sh
+	@./scripts/verify-style-cpp.sh
