@@ -135,7 +135,7 @@ PPIndentWidth: -1
 ReferenceAlignment: Pointer
 ReflowComments: false
 ShortNamespaceLines: 0
-SortIncludes: CaseSensitive
+SortIncludes: Never # since we're using "unity build" and includes need to be in specific order
 SortJavaStaticImport: Before
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false

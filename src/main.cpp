@@ -1,193 +1,116 @@
-// HelloWorldCPP.cpp
-// A simple Hello World macOS app using C++
-
-#include <CoreGraphics/CoreGraphics.h>
-#include <iostream>
-#include <memory>
-#include <objc/NSObjCRuntime.h>
-#include <objc/message.h>
-#include <objc/objc.h>
-#include <objc/runtime.h>
-#include <string>
-
-typedef enum NSApplicationActivationPolicy {
-    NSApplicationActivationPolicyRegular = 0,
-    NSApplicationActivationPolicyAccessory = 1,
-    NSApplicationActivationPolicyERROR = 2,
-} NSApplicationActivationPolicy;
-
-typedef enum NSWindowStyleMask {
-    NSWindowStyleMaskBorderless = 0,
-    NSWindowStyleMaskTitled = 1 << 0,
-    NSWindowStyleMaskClosable = 1 << 1,
-    NSWindowStyleMaskMiniaturizable = 1 << 2,
-    NSWindowStyleMaskResizable = 1 << 3,
-} NSWindowStyleMask;
-
-typedef enum NSBackingStoreType {
-    NSBackingStoreBuffered = 2,
-} NSBackingStoreType;
-
-// Template for objc_msgSend to make it more type-safe in C++
-template <typename RetT, typename... ArgT>
-RetT objc_msg_send(id self, SEL selector, ArgT... args)
-{
-    using MSGSendT = RetT (*)(id, SEL, ArgT...);
-    return ((MSGSendT)objc_msgSend)(self, selector, args...);
-}
-
-// Helper to create SEL from string
-SEL sel(const char* name)
-{
-    return sel_registerName(name);
-}
-
-// Helper to get class by name
-// Class cls(const char* name) {
-//     return objc_getClass(name);
-// }
-
-template <typename RetT = Class>
-RetT cls(const char* name)
-{
-    auto clazz = objc_getClass(name);
-    return reinterpret_cast<RetT>(clazz);
-}
-
-// Window delegate protocol implementation
-void windowWillClose(id self, SEL _cmd, id notification)
-{
-    id NSApp = objc_msg_send<id>(
-        cls<id>("NSApplication"),
-        sel("sharedApplication")
-    );
-    objc_msg_send<void>(NSApp, sel("terminate:"), nullptr);
-}
-
-// Wrapper for NSString creation
-id createNSString(const std::string& str)
-{
-    return objc_msg_send<id>(
-        cls<id>("NSString"),
-        sel("stringWithUTF8String:"),
-        str.c_str()
-    );
-}
-
-/**
- * https://developer.apple.com/documentation/foundation/nsautoreleasepool
- */
-class AutoreleasePool {
-private:
-    id pool;
-
-public:
-    AutoreleasePool()
-    {
-        pool = objc_msg_send<id>(
-            objc_msg_send<id>(cls<id>("NSAutoreleasePool"), sel("alloc")),
-            sel("init")
-        );
-    }
-    ~AutoreleasePool() { objc_msg_send<void>(pool, sel("drain")); }
-};
-
 int main(int argc, const char* argv[])
 {
     try {
         // Use RAII for autorelease pool
-        AutoreleasePool pool;
+        osx::AutoreleasePool pool;
 
         // Get NSApplication instance
-        id NSApp = objc_msg_send<id>(
-            cls<id>("NSApplication"),
-            sel("sharedApplication")
+        id NSApp = osx::objc_msg_send<id>(
+            osx::cls<id>("NSApplication"),
+            osx::sel("sharedApplication")
         );
 
         // Create window delegate class
         Class WindowDelegate = objc_allocateClassPair(
-            cls("NSObject"),
+            osx::cls("NSObject"),
             "WindowDelegate",
             0
         );
         class_addMethod(
             WindowDelegate,
-            sel("windowWillClose:"),
-            (IMP)windowWillClose,
+            osx::sel("windowWillClose:"),
+            (IMP)osx::windowWillClose,
             "v@:@"
         );
         objc_registerClassPair(WindowDelegate);
 
         // Create window delegate instance
-        id delegate = objc_msg_send<id>(
-            objc_msg_send<id>(
+        id delegate = osx::objc_msg_send<id>(
+            osx::objc_msg_send<id>(
                 reinterpret_cast<id>(WindowDelegate),
-                sel("alloc")
+                osx::sel("alloc")
             ),
-            sel("init")
+            osx::sel("init")
         );
 
         // Setup window
         CGRect frame = CGRectMake(100, 100, 400, 200);
-        unsigned long
-            styleMask = NSWindowStyleMask::NSWindowStyleMaskTitled |
-                        NSWindowStyleMask::NSWindowStyleMaskClosable |
-                        NSWindowStyleMask::NSWindowStyleMaskMiniaturizable |
-                        NSWindowStyleMask::NSWindowStyleMaskResizable;
+        unsigned long styleMask =
+            osx::NSWindowStyleMask::NSWindowStyleMaskTitled |
+            osx::NSWindowStyleMask::NSWindowStyleMaskClosable |
+            osx::NSWindowStyleMask::NSWindowStyleMaskMiniaturizable |
+            osx::NSWindowStyleMask::NSWindowStyleMaskResizable;
 
-        id window = objc_msg_send<id>(cls<id>("NSWindow"), sel("alloc"));
-        window = objc_msg_send<id>(
+        id window = osx::objc_msg_send<id>(
+            osx::cls<id>("NSWindow"),
+            osx::sel("alloc")
+        );
+        window = osx::objc_msg_send<id>(
             window,
-            sel("initWithContentRect:styleMask:backing:defer:"),
+            osx::sel("initWithContentRect:styleMask:backing:defer:"),
             frame,
             styleMask,
-            NSBackingStoreBuffered,
+            osx::NSBackingStoreBuffered,
             false
         );
 
         // Set window properties
-        objc_msg_send<void>(
+        osx::objc_msg_send<void>(
             window,
-            sel("setTitle:"),
-            createNSString("Hello World - C++ App")
+            osx::sel("setTitle:"),
+            osx::createNSString("Hello World - C++ App")
         );
-        objc_msg_send<void>(window, sel("setDelegate:"), delegate);
+        osx::objc_msg_send<void>(window, osx::sel("setDelegate:"), delegate);
 
         // Create Hello World label
-        id label = objc_msg_send<id>(cls<id>("NSTextField"), sel("alloc"));
-        label = objc_msg_send<id>(
+        id label = osx::objc_msg_send<id>(
+            osx::cls<id>("NSTextField"),
+            osx::sel("alloc")
+        );
+        label = osx::objc_msg_send<id>(
             label,
-            sel("initWithFrame:"),
+            osx::sel("initWithFrame:"),
             CGRectMake(100, 80, 200, 40)
         );
-        objc_msg_send<void>(
+        osx::objc_msg_send<void>(
             label,
-            sel("setStringValue:"),
-            createNSString("Hello, World!")
+            osx::sel("setStringValue:"),
+            osx::createNSString("Hello, World!")
         );
-        objc_msg_send<void>(label, sel("setBezeled:"), false);
-        objc_msg_send<void>(label, sel("setDrawsBackground:"), false);
-        objc_msg_send<void>(label, sel("setEditable:"), false);
-        objc_msg_send<void>(label, sel("setSelectable:"), false);
+        osx::objc_msg_send<void>(label, osx::sel("setBezeled:"), false);
+        osx::objc_msg_send<void>(label, osx::sel("setDrawsBackground:"), false);
+        osx::objc_msg_send<void>(label, osx::sel("setEditable:"), false);
+        osx::objc_msg_send<void>(label, osx::sel("setSelectable:"), false);
 
         // Set font
-        id font = objc_msg_send<id>(
-            cls<id>("NSFont"),
-            sel("systemFontOfSize:"),
+        id font = osx::objc_msg_send<id>(
+            osx::cls<id>("NSFont"),
+            osx::sel("systemFontOfSize:"),
             24.0
         );
-        objc_msg_send<void>(label, sel("setFont:"), font);
+        osx::objc_msg_send<void>(label, osx::sel("setFont:"), font);
 
         // Add label to window content view
-        id contentView = objc_msg_send<id>(window, sel("contentView"));
-        objc_msg_send<void>(contentView, sel("addSubview:"), label);
+        id contentView = osx::objc_msg_send<id>(
+            window,
+            osx::sel("contentView")
+        );
+        osx::objc_msg_send<void>(contentView, osx::sel("addSubview:"), label);
 
         // Show window and activate app
-        objc_msg_send<void>(window, sel("makeKeyAndOrderFront:"), nullptr);
-        objc_msg_send<void>(NSApp, sel("activateIgnoringOtherApps:"), true);
+        osx::objc_msg_send<void>(
+            window,
+            osx::sel("makeKeyAndOrderFront:"),
+            nullptr
+        );
+        osx::objc_msg_send<void>(
+            NSApp,
+            osx::sel("activateIgnoringOtherApps:"),
+            true
+        );
 
         // Run the application
-        objc_msg_send<void>(NSApp, sel("run"));
+        osx::objc_msg_send<void>(NSApp, osx::sel("run"));
 
         // Pool will be automatically drained at the end of scope
 
