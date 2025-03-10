@@ -23,6 +23,7 @@ readonly verify_mode=${1:-"all"} # 'all', 'staged'
 source_files=()
 if [[ ${verify_mode} == "all" ]]; then
   # enumerate all source files
+  echo "verify-format-cpp.sh: Verifying format of ALL source files..."
   for directory in "${source_directories[@]}"; do
     for file in $(find "$directory" -name '*.h' -o -name '*.cpp'); do
       source_files+=("$file")
@@ -30,6 +31,7 @@ if [[ ${verify_mode} == "all" ]]; then
   done
 elif [[ ${verify_mode} == "staged" ]]; then
   # enumerate source files that have been staged in git
+  echo "verify-format-cpp.sh: Verifying format of staged source files..."
   for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.h$|\.cpp$'); do
     source_files+=("$file")
   done
